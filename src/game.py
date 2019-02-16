@@ -1,5 +1,6 @@
 import pygame
 import sys
+import random
 
 from src.player import Player
 from src.ball import Ball
@@ -63,29 +64,22 @@ def main():
                 pygame.quit()
                 sys.exit()
 
-        if ball.rect.colliderect(player.rect):
-            ball.apply_collision(player.rect)
-        elif ball.rect.colliderect(border_rects[0]):
-            ball.reflect_y_velocity()
-        elif ball.rect.collidelist(border_rects[1:3]) != -1:
-            ball.reflect_x_velocity()
+        check_border_collisions(ball, player, border_rects)
+        old_brick = check_brick_collisions(ball, brick_rects, is_brick)
 
-        # TODO: Fix buggy collision interactions
-        for row in range(len(brick_rects) - 1, 0, -1):
-            collision = ball.rect.collidelist(brick_rects[row])
-            if collision != -1 and is_brick[row][collision]:
-                brick = brick_rects[row][collision]
-                is_brick[row][collision] = False
-                ball.apply_collision(brick)
+        for row in range(len(brick_rects)):
+            for col in range(len(brick_rects[0])):
+                if brick_rects[row][col] == old_brick:
+                    is_brick[row][col] = False
+                    break
 
         keys = pygame.key.get_pressed()
         if keys[K_a] or keys[K_LEFT]:
             player.move_left(BARWIDTH)
-
         elif keys[K_d] or keys[K_RIGHT]:
             player.move_right(BARWIDTH, WINDOWWIDTH)
 
-        ball.update_ball_pos()
+        ball.update_ball_pos(ball.x_velocity, ball.y_velocity)
 
         pygame.display.update()
         FPSCLOCK.tick(FPS)
@@ -137,6 +131,32 @@ def draw_bricks(is_brick):
 
 def draw_ball(ball_rect):
     pygame.draw.rect(DISPLAYSURF, RED, ball_rect)
+
+
+def check_border_collisions(ball, player, border_rects):
+    if ball.rect.colliderect(player.rect):
+        ball.apply_collision([player.rect])
+    elif ball.rect.colliderect(border_rects[0]):
+        ball.reflect_y_velocity()
+    elif ball.rect.colliderect(border_rects[1]):
+        ball.reflect_x_velocity()
+        ball.update_ball_pos(5, 0)
+    elif ball.rect.colliderect(border_rects[2]):
+        ball.reflect_x_velocity()
+        ball.update_ball_pos(-5, 0)
+
+
+def check_brick_collisions(ball, brick_rects, is_brick):
+    collided_bricks = []
+    for row in range(len(brick_rects)):
+        for col in range(len(brick_rects[0])):
+            if (ball.rect.colliderect(brick_rects[row][col]) and
+                    is_brick[row][col]):
+                collided_bricks.append(brick_rects[row][col])
+    if not collided_bricks:
+        return
+    ball.apply_collision(collided_bricks)
+    return random.choice(collided_bricks)
 
 
 if __name__ == '__main__':
