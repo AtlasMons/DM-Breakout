@@ -46,7 +46,7 @@ def main():
     DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
 
     pygame.display.set_caption('Breakout')
-    draw_borders()
+    border_rects = draw_borders()
 
     player_x = WINDOWWIDTH / 2
     player_y = WINDOWHEIGHT - 10
@@ -55,15 +55,40 @@ def main():
     ball_x = WINDOWWIDTH / 2
     ball_y = BRICKCEILING + 200
 
-    ball_velocity = [1, 1]
+    ball_velocity = [4, 4]
 
-    bricks = [[True for _ in range(ROWSIZE)] for _ in BRICKCOLORS]
+    is_brick = [[True for _ in range(ROWSIZE)] for _ in BRICKCOLORS]
 
     while True:
         draw_blank()
-        draw_bricks(bricks)
-        draw_player(player_x, player_y)
-        draw_ball(ball_x, ball_y)
+        brick_rects = draw_bricks(is_brick)
+
+        player_rect = pygame.Rect(player_x - PLAYERWIDTH / 2,
+                                 player_y - PLAYERHEIGHT / 2,
+                                 PLAYERWIDTH, PLAYERHEIGHT)
+        draw_player(player_rect)
+
+        ball_rect = pygame.Rect(ball_x - BALLWIDTH / 2, ball_y - BALLWIDTH / 2,
+                      BALLWIDTH, BALLWIDTH)
+        draw_ball(ball_rect)
+
+        if ball_rect.colliderect(player_rect) or \
+                ball_rect.colliderect(border_rects[0]):
+            ball_velocity[1] *= -1
+        elif ball_rect.collidelist(border_rects[1:3]) != -1:
+            ball_velocity[0] *= -1
+
+        for row in range(len(brick_rects)):
+            collision = ball_rect.collidelist(brick_rects[row])
+            if collision != -1 and is_brick[row][collision]:
+                brick = brick_rects[row][collision]
+                if abs(ball_x - brick.left) < 5 or abs(ball_x - brick.right) < 4:
+                    ball_velocity[0] *= -1
+                    is_brick[row][collision] = False
+                if abs(ball_y - brick.top) < 5 or abs(ball_y - brick.bottom) < 4:
+                    ball_velocity[1] *= -1
+                    is_brick[row][collision] = False
+
 
         keys = pygame.key.get_pressed()
         if keys[K_a] or keys[K_LEFT]:
@@ -74,7 +99,6 @@ def main():
                           player_x + PLAYERINC)
             # cannot go off right side of screen
 
-        # TODO: Implement collision detection
         ball_x += ball_velocity[0]
         ball_y += ball_velocity[1]
 
@@ -89,22 +113,25 @@ def main():
 
 
 def draw_borders():
-    pygame.draw.rect(DISPLAYSURF, GRAY, (0, HEADERHEIGHT,
-                                         WINDOWWIDTH, BARWIDTH))
-    pygame.draw.rect(DISPLAYSURF, GRAY, (0, HEADERHEIGHT, BARWIDTH, BARHEIGHT))
-    pygame.draw.rect(DISPLAYSURF, GRAY, (WINDOWWIDTH - BARWIDTH, HEADERHEIGHT,
-                                         BARWIDTH, BARHEIGHT))
-    pygame.draw.rect(DISPLAYSURF, CYAN, (0, BARHEIGHT + HEADERHEIGHT,
-                                         BARWIDTH, 20))
-    pygame.draw.rect(DISPLAYSURF, RED,
-                     (WINDOWWIDTH - BARWIDTH, BARHEIGHT + HEADERHEIGHT,
-                      BARWIDTH, 20))
+    top_bar = pygame.Rect(0, HEADERHEIGHT, WINDOWWIDTH, BARWIDTH)
+    left_bar = pygame.Rect(0, HEADERHEIGHT, BARWIDTH, BARHEIGHT)
+    right_bar = pygame.Rect(WINDOWWIDTH - BARWIDTH, HEADERHEIGHT, BARWIDTH,
+                            BARHEIGHT)
+    cyan_bar = pygame.Rect(0, BARHEIGHT + HEADERHEIGHT, BARWIDTH, 20)
+    red_bar = pygame.Rect(WINDOWWIDTH - BARWIDTH, BARHEIGHT + HEADERHEIGHT,
+                      BARWIDTH, 20)
+
+    pygame.draw.rect(DISPLAYSURF, GRAY, top_bar)
+    pygame.draw.rect(DISPLAYSURF, GRAY, left_bar)
+    pygame.draw.rect(DISPLAYSURF, GRAY, right_bar)
+    pygame.draw.rect(DISPLAYSURF, CYAN, cyan_bar)
+    pygame.draw.rect(DISPLAYSURF, RED, red_bar)
+
+    return [top_bar, left_bar, right_bar, cyan_bar, red_bar]
 
 
-def draw_player(player_x, player_y):
-    pygame.draw.rect(DISPLAYSURF, RED,
-                     (player_x - PLAYERWIDTH / 2, player_y - PLAYERHEIGHT / 2,
-                      PLAYERWIDTH, PLAYERHEIGHT))
+def draw_player(player_rect):
+    pygame.draw.rect(DISPLAYSURF, RED, player_rect)
 
 
 # erases previous drawing of game
@@ -115,20 +142,22 @@ def draw_blank():
                       WINDOWHEIGHT - HEADERHEIGHT - BARWIDTH))
 
 
-def draw_bricks(bricks):
+def draw_bricks(is_brick):
+    brick_rects = []
     for row in range(len(BRICKCOLORS)):
+        brick_rects.append([])
         for col in range(ROWSIZE):
-            if bricks[row][col]:
-                pygame.draw.rect(DISPLAYSURF, BRICKCOLORS[row],
-                                 (BARWIDTH + col * BRICKWIDTH,
-                                  BRICKCEILING + row * BRICKHEIGHT,
-                                  BRICKWIDTH, BRICKHEIGHT))
+            brick_rect = pygame.Rect(BARWIDTH + col * BRICKWIDTH,
+                                     BRICKCEILING + row * BRICKHEIGHT,
+                                     BRICKWIDTH, BRICKHEIGHT)
+            brick_rects[row].append(brick_rect)
+            if is_brick[row][col]:
+                pygame.draw.rect(DISPLAYSURF, BRICKCOLORS[row], brick_rect)
+    return brick_rects
 
 
-def draw_ball(ball_x, ball_y):
-    pygame.draw.rect(DISPLAYSURF, RED,
-                     (ball_x - BALLWIDTH / 2, ball_y - BALLWIDTH / 2,
-                      BALLWIDTH, BALLWIDTH))
+def draw_ball(ball_rect):
+    pygame.draw.rect(DISPLAYSURF, RED, ball_rect)
 
 if __name__ == '__main__':
     main()
