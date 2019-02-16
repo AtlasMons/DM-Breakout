@@ -1,6 +1,7 @@
 import pygame
 import sys
 import random
+import time
 
 from src.player import Player
 from src.ball import Ball
@@ -51,12 +52,19 @@ def main():
     player = Player(WINDOWWIDTH / 2, WINDOWHEIGHT - 10)
     # y-coord is fixed, player can only move along x-axis
     is_brick = [[True for _ in range(ROWSIZE)] for _ in BRICKCOLORS]
+    score = 0
 
+    fontObj = pygame.font.Font('freesansbold.ttf', 50)
     while True:
         draw_blank()
         brick_rects = draw_bricks(is_brick)
         draw_player(player.rect)
         draw_ball(ball.rect)
+
+        textSurfaceObj = fontObj.render(' %03d ' % score, True, GRAY, BLACK)
+        textRectObj = textSurfaceObj.get_rect()
+        textRectObj.center = (480, 45)
+        DISPLAYSURF.blit(textSurfaceObj, textRectObj)
 
         for event in pygame.event.get():
             if event.type == QUIT or (event.type == KEYUP
@@ -70,6 +78,7 @@ def main():
         for row in range(len(brick_rects)):
             for col in range(len(brick_rects[0])):
                 if brick_rects[row][col] == old_brick:
+                    score += 1
                     is_brick[row][col] = False
                     break
 

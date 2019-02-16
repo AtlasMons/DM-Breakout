@@ -1,5 +1,6 @@
 from pygame import Rect
 
+
 class Ball:
     def __init__(self, x, y, v):
         self.x = x
@@ -50,11 +51,3 @@ class Ball:
                     self.reflect_x_velocity()
                 else:
                     self.reflect_y_velocity()
-        # if abs(self.y + self.width / 2 - brick.top) < self.y_velocity:
-        #     self.reflect_y_velocity()
-        # elif abs(self.y - self.width / 2 - brick.bottom) < self.y_velocity:
-        #     self.reflect_y_velocity()
-        # elif abs(self.x + self.width / 2 - brick.left) < self.x_velocity:
-        #     self.reflect_x_velocity()
-        # elif abs(self.x - self.width / 2 - brick.right) < self.x_velocity:
-        #     self.reflect_x_velocity()
