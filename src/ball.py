@@ -18,10 +18,20 @@ class Ball:
                          self.width, self.width)
 
     def reflect_x_velocity(self):
-        self.x_velocity *= -1
+        self.x_velocity *= -1.
 
     def reflect_y_velocity(self):
-        self.y_velocity *= -1
+        self.y_velocity *= -1.
+
+    def speed_up(self):
+        if self.x_velocity > 0:
+            self.x_velocity = min(4., self.x_velocity + .25)
+        else:
+            self.x_velocity = max(-4., self.x_velocity - .25)
+        if self.y_velocity > 0:
+            self.y_velocity = min(4., self.y_velocity + .25)
+        else:
+            self.y_velocity = max(-4., self.y_velocity - .25)
 
     def apply_collision(self, bricks):
         assert len(bricks) < 4, "This collision is not possible"

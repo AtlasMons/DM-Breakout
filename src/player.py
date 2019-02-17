@@ -7,7 +7,7 @@ class Player:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.width = 100
+        self.width = 120
         self.height = 15
         self.rect = Rect(self.x - self.width / 2, self.y - self.height / 2,
                          self.width, self.height)

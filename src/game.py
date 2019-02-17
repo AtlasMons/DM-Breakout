@@ -46,25 +46,21 @@ def main():
     DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
 
     pygame.display.set_caption('Breakout')
-    border_rects = draw_borders()
 
-    ball = Ball(WINDOWWIDTH / 2, BRICKCEILING + 200, 2)
+    ball = Ball(WINDOWWIDTH / 2, BRICKCEILING + 200, 1.0)
     player = Player(WINDOWWIDTH / 2, WINDOWHEIGHT - 10)
     # y-coord is fixed, player can only move along x-axis
     is_brick = [[True for _ in range(ROWSIZE)] for _ in BRICKCOLORS]
     score = 0
+    lives = 3
 
-    fontObj = pygame.font.Font('freesansbold.ttf', 50)
     while True:
         draw_blank()
+        border_rects = draw_borders()
         brick_rects = draw_bricks(is_brick)
         draw_player(player.rect)
         draw_ball(ball.rect)
-
-        textSurfaceObj = fontObj.render(' %03d ' % score, True, GRAY, BLACK)
-        textRectObj = textSurfaceObj.get_rect()
-        textRectObj.center = (480, 45)
-        DISPLAYSURF.blit(textSurfaceObj, textRectObj)
+        draw_scoreboard(score, lives)
 
         for event in pygame.event.get():
             if event.type == QUIT or (event.type == KEYUP
@@ -72,16 +68,18 @@ def main():
                 pygame.quit()
                 sys.exit()
 
+        # Collision detection
         check_border_collisions(ball, player, border_rects)
         old_brick = check_brick_collisions(ball, brick_rects, is_brick)
+        if old_brick:
+            for row in range(len(brick_rects)):
+                for col in range(len(brick_rects[0])):
+                    if brick_rects[row][col] == old_brick:
+                        score += 1
+                        is_brick[row][col] = False
+                        break
 
-        for row in range(len(brick_rects)):
-            for col in range(len(brick_rects[0])):
-                if brick_rects[row][col] == old_brick:
-                    score += 1
-                    is_brick[row][col] = False
-                    break
-
+        # Check player inputs
         keys = pygame.key.get_pressed()
         if keys[K_a] or keys[K_LEFT]:
             player.move_left(BARWIDTH)
@@ -89,6 +87,15 @@ def main():
             player.move_right(BARWIDTH, WINDOWWIDTH)
 
         ball.update_ball_pos(ball.x_velocity, ball.y_velocity)
+
+        # Lost a life
+        if ball.y > WINDOWHEIGHT + ball.width:
+            if lives == 0:
+                pygame.quit()
+                sys.exit()
+            time.sleep(2)
+            ball = Ball(WINDOWWIDTH / 2, BRICKCEILING + 200, 1.0)
+            lives -= 1
 
         pygame.display.update()
         FPSCLOCK.tick(FPS)
@@ -101,7 +108,7 @@ def draw_borders():
                             BARHEIGHT)
     cyan_bar = pygame.Rect(0, BARHEIGHT + HEADERHEIGHT, BARWIDTH, 20)
     red_bar = pygame.Rect(WINDOWWIDTH - BARWIDTH, BARHEIGHT + HEADERHEIGHT,
-                      BARWIDTH, 20)
+                          BARWIDTH, 20)
 
     pygame.draw.rect(DISPLAYSURF, GRAY, top_bar)
     pygame.draw.rect(DISPLAYSURF, GRAY, left_bar)
@@ -138,6 +145,14 @@ def draw_bricks(is_brick):
     return brick_rects
 
 
+def draw_scoreboard(score, lives):
+    fontObj = pygame.font.Font('freesansbold.ttf', 50)
+    textSurfaceObj = fontObj.render(' %03d         %d ' % (score, lives), True,
+                                    GRAY, BLACK)
+    textRectObj = textSurfaceObj.get_rect()
+    textRectObj.center = (480, 45)
+    DISPLAYSURF.blit(textSurfaceObj, textRectObj)
+
 def draw_ball(ball_rect):
     pygame.draw.rect(DISPLAYSURF, RED, ball_rect)
 
@@ -145,6 +160,7 @@ def draw_ball(ball_rect):
 def check_border_collisions(ball, player, border_rects):
     if ball.rect.colliderect(player.rect):
         ball.apply_collision([player.rect])
+        ball.speed_up()
     elif ball.rect.colliderect(border_rects[0]):
         ball.reflect_y_velocity()
     elif ball.rect.colliderect(border_rects[1]):
