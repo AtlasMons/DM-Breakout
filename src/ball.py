@@ -33,6 +33,20 @@ class Ball:
         else:
             self.y_velocity = max(-4., self.y_velocity - .25)
 
+    def apply_player_collision(self, player):
+        if abs(self.x - player.x) < player.width / 2:
+            base_velocity = 4 * (self.x - player.x) / (player.width / 2)
+
+            if 0 <= base_velocity < 1:
+                base_velocity = 1.0
+            elif -1 < base_velocity < 0:
+                base_velocity = -1.0
+
+            self.reflect_y_velocity()
+            self.x_velocity = base_velocity
+        else:
+            self.reflect_x_velocity()
+
     def apply_collision(self, bricks):
         assert len(bricks) < 4, "This collision is not possible"
         if len(bricks) == 0:
@@ -51,13 +65,8 @@ class Ball:
                 self.reflect_y_velocity()
                 self.reflect_x_velocity()
         else:  # len == 1
-            if self.x_velocity > 0:
-                if self.x < bricks[0].left:
-                    self.reflect_x_velocity()
-                else:
-                    self.reflect_y_velocity()
+            if (self.x_velocity > 0 and self.x < bricks[0].left) or \
+                    (self.x_velocity <= 0 and self.x > bricks[0].right):
+                self.reflect_x_velocity()
             else:
-                if self.x > bricks[0].right:
-                    self.reflect_x_velocity()
-                else:
-                    self.reflect_y_velocity()
+                self.reflect_y_velocity()

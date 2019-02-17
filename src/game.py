@@ -79,13 +79,7 @@ def main():
                         is_brick[row][col] = False
                         break
 
-        # Check player inputs
-        keys = pygame.key.get_pressed()
-        if keys[K_a] or keys[K_LEFT]:
-            player.move_left(BARWIDTH)
-        elif keys[K_d] or keys[K_RIGHT]:
-            player.move_right(BARWIDTH, WINDOWWIDTH)
-
+        check_player_inputs(player, pygame.key.get_pressed())
         ball.update_ball_pos(ball.x_velocity, ball.y_velocity)
 
         # Lost a life
@@ -93,7 +87,7 @@ def main():
             if lives == 0:
                 pygame.quit()
                 sys.exit()
-            time.sleep(2)
+            time.sleep(1)
             ball = Ball(WINDOWWIDTH / 2, BRICKCEILING + 200, 1.0)
             lives -= 1
 
@@ -153,13 +147,14 @@ def draw_scoreboard(score, lives):
     textRectObj.center = (480, 45)
     DISPLAYSURF.blit(textSurfaceObj, textRectObj)
 
+
 def draw_ball(ball_rect):
     pygame.draw.rect(DISPLAYSURF, RED, ball_rect)
 
 
 def check_border_collisions(ball, player, border_rects):
     if ball.rect.colliderect(player.rect):
-        ball.apply_collision([player.rect])
+        ball.apply_player_collision(player)
         ball.speed_up()
     elif ball.rect.colliderect(border_rects[0]):
         ball.reflect_y_velocity()
@@ -182,6 +177,13 @@ def check_brick_collisions(ball, brick_rects, is_brick):
         return
     ball.apply_collision(collided_bricks)
     return random.choice(collided_bricks)
+
+
+def check_player_inputs(player, keys):
+    if keys[K_a] or keys[K_LEFT]:
+        player.move_left(BARWIDTH)
+    elif keys[K_d] or keys[K_RIGHT]:
+        player.move_right(BARWIDTH, WINDOWWIDTH)
 
 
 if __name__ == '__main__':
