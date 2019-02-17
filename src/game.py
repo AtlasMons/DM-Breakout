@@ -53,6 +53,7 @@ def main():
     is_brick = [[True for _ in range(ROWSIZE)] for _ in BRICKCOLORS]
     score = 0
     lives = 3
+    level = 1
 
     while True:
         draw_blank()
@@ -60,7 +61,7 @@ def main():
         brick_rects = draw_bricks(is_brick)
         draw_player(player.rect)
         draw_ball(ball.rect)
-        draw_scoreboard(score, lives)
+        draw_scoreboard(score, lives, level)
 
         for event in pygame.event.get():
             if event.type == QUIT or (event.type == KEYUP
@@ -90,6 +91,18 @@ def main():
             time.sleep(1)
             ball = Ball(WINDOWWIDTH / 2, BRICKCEILING + 200, 1.0)
             lives -= 1
+
+        if is_win(is_brick):
+            if level == 9:
+                pygame.quit()
+                sys.exit()
+            # reset whole game
+            time.sleep(1)
+            ball = Ball(WINDOWWIDTH / 2, BRICKCEILING + 200, 1.0)
+            player = Player(WINDOWWIDTH / 2, WINDOWHEIGHT - 10)
+            is_brick = [[True for _ in range(ROWSIZE)] for _ in BRICKCOLORS]
+
+            level += 1
 
         pygame.display.update()
         FPSCLOCK.tick(FPS)
@@ -139,13 +152,13 @@ def draw_bricks(is_brick):
     return brick_rects
 
 
-def draw_scoreboard(score, lives):
-    fontObj = pygame.font.Font('freesansbold.ttf', 50)
-    textSurfaceObj = fontObj.render(' %03d         %d ' % (score, lives), True,
-                                    GRAY, BLACK)
-    textRectObj = textSurfaceObj.get_rect()
-    textRectObj.center = (480, 45)
-    DISPLAYSURF.blit(textSurfaceObj, textRectObj)
+def draw_scoreboard(score, lives, level):
+    font_obj = pygame.font.Font('freesansbold.ttf', 50)
+    board_str = ' %03d          %d          %d ' % (score, lives, level)
+    text_surface_obj = font_obj.render(board_str, True, GRAY, BLACK)
+    text_rect_obj = text_surface_obj.get_rect()
+    text_rect_obj.center = (720, 45)
+    DISPLAYSURF.blit(text_surface_obj, text_rect_obj)
 
 
 def draw_ball(ball_rect):
@@ -185,6 +198,12 @@ def check_player_inputs(player, keys):
     elif keys[K_d] or keys[K_RIGHT]:
         player.move_right(BARWIDTH, WINDOWWIDTH)
 
+
+def is_win(is_brick):
+    for row in is_brick:
+        if True in row:
+            return False
+    return True
 
 if __name__ == '__main__':
     main()

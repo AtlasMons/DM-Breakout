@@ -37,10 +37,10 @@ class Ball:
         if abs(self.x - player.x) < player.width / 2:
             base_velocity = 4 * (self.x - player.x) / (player.width / 2)
 
-            if 0 <= base_velocity < 1:
-                base_velocity = 1.0
-            elif -1 < base_velocity < 0:
-                base_velocity = -1.0
+            if 0 <= base_velocity < .25:
+                base_velocity = .25
+            elif -.25 < base_velocity < 0:
+                base_velocity = -.25
 
             self.reflect_y_velocity()
             self.x_velocity = base_velocity
