@@ -29,9 +29,9 @@ class Ball:
         else:
             self.x_velocity = max(-4., self.x_velocity - .25)
         if self.y_velocity > 0:
-            self.y_velocity = min(4., self.y_velocity + .25)
+            self.y_velocity = min(5., self.y_velocity + .25)
         else:
-            self.y_velocity = max(-4., self.y_velocity - .25)
+            self.y_velocity = max(-5., self.y_velocity - .25)
 
     def apply_player_collision(self, player):
         if abs(self.x - player.x) < player.width / 2:

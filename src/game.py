@@ -54,14 +54,16 @@ def main():
     score = 0
     lives = 3
     level = 1
+    start_time = pygame.time.get_ticks()
 
     while True:
+        new_time = (pygame.time.get_ticks() - start_time) / 1000    # time in seconds
         draw_blank()
         border_rects = draw_borders()
         brick_rects = draw_bricks(is_brick)
         draw_player(player.rect)
         draw_ball(ball.rect)
-        draw_scoreboard(score, lives, level)
+        draw_scoreboard(new_time, score, lives, level)
 
         for event in pygame.event.get():
             if event.type == QUIT or (event.type == KEYUP
@@ -152,12 +154,12 @@ def draw_bricks(is_brick):
     return brick_rects
 
 
-def draw_scoreboard(score, lives, level):
-    font_obj = pygame.font.Font('freesansbold.ttf', 50)
-    board_str = ' %03d          %d          %d ' % (score, lives, level)
+def draw_scoreboard(time, score, lives, level):
+    font_obj = pygame.font.Font('freesansbold.ttf', 60)
+    board_str = ' %06.2f    %03d       %d       %d' % (time, score, lives, level)
     text_surface_obj = font_obj.render(board_str, True, GRAY, BLACK)
     text_rect_obj = text_surface_obj.get_rect()
-    text_rect_obj.center = (720, 45)
+    text_rect_obj.center = (520, 45)
     DISPLAYSURF.blit(text_surface_obj, text_rect_obj)
 
 
