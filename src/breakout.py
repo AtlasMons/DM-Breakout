@@ -2,6 +2,8 @@ import pygame
 import sys
 import random
 import time
+import os
+import neat
 
 from src.player import Player
 from src.ball import Ball
@@ -39,22 +41,31 @@ BLUE        = ( 64,  80, 213)
 BRICKCOLORS = [RED, ORANGE, DARK_YELLOW, YELLOW, GREEN, BLUE]
 
 
-def main():
+def main(genomes, config):
+    for i, g in genomes:
+        net = neat.nn.FeedForwardNetwork.create(g, config)
+        g.fitness = 0
+        g.fitness += game(net)
+        print(i)    # print genome id
+
+
+def game(net):
     global FPSCLOCK, DISPLAYSURF
     pygame.init()
     FPSCLOCK = pygame.time.Clock()
     DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
 
     pygame.display.set_caption('Breakout')
+    start_time = pygame.time.get_ticks()
 
     ball = Ball(WINDOWWIDTH / 2, BRICKCEILING + 200, 1.0)
     player = Player(WINDOWWIDTH / 2, WINDOWHEIGHT - 10)
     # y-coord is fixed, player can only move along x-axis
     is_brick = [[True for _ in range(ROWSIZE)] for _ in BRICKCOLORS]
     score = 0
-    lives = 3
+    lives = 0
     level = 1
-    start_time = pygame.time.get_ticks()
+
 
     while True:
         new_time = (pygame.time.get_ticks() - start_time) / 1000    # time in seconds
@@ -89,7 +100,7 @@ def main():
         if ball.y > WINDOWHEIGHT + ball.width:
             if lives == 0:
                 pygame.quit()
-                sys.exit()
+                return score
             time.sleep(1)
             ball = Ball(WINDOWWIDTH / 2, BRICKCEILING + 200, 1.0)
             lives -= 1
@@ -108,6 +119,12 @@ def main():
 
         pygame.display.update()
         FPSCLOCK.tick(FPS)
+        flat_bricks = [b for brick in is_brick for b in brick]
+        output = net.activate((player.x, ball.y, ball.x, *flat_bricks))
+        if output[0] > 0.5:
+            player.move_right(BARWIDTH, WINDOWWIDTH)
+        if output[1] > 0.5:
+            player.move_left(BARWIDTH)
 
 
 def draw_borders():
@@ -156,7 +173,7 @@ def draw_bricks(is_brick):
 
 def draw_scoreboard(time, score, lives, level):
     font_obj = pygame.font.Font('freesansbold.ttf', 60)
-    board_str = ' %06.2f    %03d       %d       %d' % (time, score, lives, level)
+    board_str = ' %05.1f    %03d       %d       %d' % (time, score, lives, level)
     text_surface_obj = font_obj.render(board_str, True, GRAY, BLACK)
     text_rect_obj = text_surface_obj.get_rect()
     text_rect_obj.center = (520, 45)
@@ -207,5 +224,20 @@ def is_win(is_brick):
             return False
     return True
 
-if __name__ == '__main__':
+
+def run(config_path):
+    config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
+                                neat.DefaultSpeciesSet, neat.DefaultStagnation,
+                                config_path)
+    p = neat.Population(config)
+    p.add_reporter(neat.StdOutReporter(True))
+    stats = neat.StatisticsReporter()
+    p.add_reporter(stats)
+
+    winner = p.run(main, 50)
     main()
+
+if __name__ == '__main__':
+    local_dir = os.path.dirname(__file__)
+    config_path = os.path.join(local_dir, "config-feedforward.txt")
+    run(config_path)
