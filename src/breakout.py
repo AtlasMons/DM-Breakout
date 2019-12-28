@@ -1,6 +1,5 @@
 import pygame
 import sys
-import random
 import time
 import os
 import neat
@@ -35,6 +34,7 @@ def main(genomes, config):
 
     while games:
         new_time = (pygame.time.get_ticks() - start_time) / 1000
+
         draw_blank()
         border_rects = draw_borders()
 
@@ -44,14 +44,13 @@ def main(genomes, config):
             game.draw_player(DISPLAYSURF)
             game.draw_ball(DISPLAYSURF)
 
-        for event in pygame.event.get():
-            if event.type == QUIT or (event.type == KEYUP
-                                      and event.key == K_ESCAPE):
-                pygame.quit()
-                sys.exit()
-
         # Collision detection
         for x, game in enumerate(games):
+            if new_time > 300:
+                games.pop(x)
+                nets.pop(x)
+                ge.pop(x)
+                break
             game.check_border_collisions(border_rects)
             old_brick = game.check_brick_collisions(brick_rects)
             if old_brick:
@@ -141,7 +140,7 @@ def run(config_path):
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
 
-    winner = p.run(main, 50)
+    winner = p.run(main, 5000)
 
 
 if __name__ == '__main__':

@@ -1,7 +1,5 @@
 import pygame
-import sys
 import random
-import time
 
 from src.player import Player
 from src.ball import Ball
