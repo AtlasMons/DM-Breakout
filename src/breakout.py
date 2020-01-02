@@ -1,8 +1,8 @@
 import pygame
-import sys
 import time
 import os
 import neat
+import numpy as np
 
 from src.player import Player
 from src.ball import Ball
@@ -46,11 +46,11 @@ def main(genomes, config):
 
         # Collision detection
         for x, game in enumerate(games):
-            if new_time > 300:
+            if new_time > 100:
                 games.pop(x)
                 nets.pop(x)
                 ge.pop(x)
-                break
+                continue
             game.check_border_collisions(border_rects)
             old_brick = game.check_brick_collisions(brick_rects)
             if old_brick:
@@ -58,9 +58,9 @@ def main(genomes, config):
                     for col in range(len(brick_rects[0])):
                         if brick_rects[row][col] == old_brick:
                             game.score += 1
-                            ge[x].fitness += .1
+                            ge[x].fitness += 1
                             game.is_brick[row][col] = False
-                            break
+                            continue
             game.ball.update_ball_pos(game.ball.x_velocity,
                                       game.ball.y_velocity)
 
@@ -71,15 +71,14 @@ def main(genomes, config):
                     games.pop(x)
                     nets.pop(x)
                     ge.pop(x)
-                    break
+                    continue
 
                 time.sleep(1)
                 game.ball = Ball(WINDOWWIDTH / 2, BRICKCEILING + 200, 1.0)
                 game.lives -= 1
 
-            flat_bricks = [b for brick in game.is_brick for b in brick]
-            output = nets[x].activate((game.player.x, game.ball.y,
-                                       game.ball.x, *flat_bricks))
+            output = nets[x].activate((game.player.x, game.ball.y, game.ball.x,
+                                       bricks_product(game.is_brick)))
             if output[0] > 0.5:
                 game.player.move_right(BARWIDTH, WINDOWWIDTH)
             if output[1] > 0.5:
@@ -87,11 +86,11 @@ def main(genomes, config):
 
             if game.is_win():
                 if game.level == 1:
-                    ge[x].fitness += 2000 / new_time
+                    ge[x].fitness += 100 - new_time
                     games.pop(x)
                     nets.pop(x)
                     ge.pop(x)
-                    break
+                    continue
                 # reset whole game
                 time.sleep(1)
                 game.ball = Ball(WINDOWWIDTH / 2, BRICKCEILING + 200, 1.0)
@@ -103,6 +102,13 @@ def main(genomes, config):
         pygame.display.update()
         FPSCLOCK.tick(FPS)
     pygame.quit()
+
+
+def bricks_product(is_brick):
+    flat = [b for brick in is_brick for b in brick]
+    temp = [brick * prime for brick, prime in zip(flat, PRIMES)]
+    temp = [a for a in temp if a != 0]
+    return np.prod(np.array(temp))
 
 
 # erases previous drawing of game
